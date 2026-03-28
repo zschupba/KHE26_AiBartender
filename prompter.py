@@ -31,7 +31,7 @@ def identifyUserIntent(prompt: str):
     # IDK how but i need to determine what the user is asking for and what they want out of the question
     print("test")
 
-# -Listening, talking, suggesting, mentoring, distracting, drinking
+# -Listening, talking, suggesting, mentoring, distracting, drinking, encouragement after purchase,
 # Target response due to circumstances/ what user wants/ update the picture
 # Build the different personalities
 # 
