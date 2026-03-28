@@ -2,6 +2,9 @@ from flask import Flask, render_template, request, session, redirect, url_for
 import time
 import sqlite3
 import hashlib
+import ollama
+import prompter
+
 
 app = Flask(__name__)
 app.secret_key = "dev_secret_key"  
@@ -94,6 +97,7 @@ def register():
 
     return render_template('register.html', error=error)
 
+
 @app.route('/bartender')
 def bartender():
     if 'username' not in session:
@@ -107,10 +111,13 @@ def send_message():
 
     data = request.get_json()
     message = data.get('message', '')
+    stringMessage = str(message)
+    if len(stringMessage) > 0:
+        response = prompter.getLlamaResponse(stringMessage + str(" answer in <40 words and act like you are a zesty bartender suggesting them to drink more"))
+    else:
+        response = "Please enter a message."
 
-    # TODO: Connect this to your AI bartender logic from prompter.py
-    # For now, return a simple echo response
-    response = f"Bartender heard: {message}"
+   
 
     return {'response': response}
 
