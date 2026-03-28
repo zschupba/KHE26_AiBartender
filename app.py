@@ -2,6 +2,9 @@ from flask import Flask, render_template, request, session, redirect, url_for
 import time
 import sqlite3
 import hashlib
+import ollama
+import prompter
+
 
 app = Flask(__name__)
 app.secret_key = "dev_secret_key"  
@@ -33,7 +36,7 @@ def login():
     # Initialize session state
     if 'failures' not in session:
         session['failures'] = 0
-    
+
     # 1) Check Lockout Status
     if 'lockout_until' in session:
         remaining = session['lockout_until'] - time.time()
@@ -47,7 +50,7 @@ def login():
     if request.method == 'POST':
         # 2) Enforce delay
         time.sleep(AUTH_DELAY)
-        
+
         username = request.form.get('username')
         password = request.form.get('password')
         hashed_password = hash_password(password)
@@ -57,14 +60,15 @@ def login():
             user = conn.execute('SELECT * FROM users WHERE username = ? AND password = ?', (username, hashed_password)).fetchone()
             if user:
                 session['failures'] = 0
-                return "<h1>Success!</h1><p>You are logged in.</p><a href='/'>Logout</a>"
-        
+                session['username'] = username
+                return redirect(url_for('bartender'))
+
         # 4) Handle Failure
         session['failures'] += 1
         if session['failures'] >= MAX_ATTEMPTS:
             session['lockout_until'] = time.time() + LOCKOUT_DURATION
             return "Too many failed attempts. Locked for 5 minutes."
-        
+
         error = f"Invalid login. Attempt {session['failures']} of {MAX_ATTEMPTS}."
 
     return render_template('login.html', error=error)
@@ -76,7 +80,7 @@ def register():
         username = request.form.get('username')
         password = request.form.get('password')
         confirm_password = request.form.get('confirm_password')
-        
+
         if password != confirm_password:
             error = "Passwords do not match."
         elif not username or not password:
@@ -90,8 +94,37 @@ def register():
                 return redirect(url_for('login'))
             except sqlite3.IntegrityError:
                 error = "Username already exists."
-    
+
     return render_template('register.html', error=error)
+
+
+@app.route('/bartender')
+def bartender():
+    if 'username' not in session:
+        return redirect(url_for('login'))
+    return render_template('bartender.html')
+
+@app.route('/send_message', methods=['POST'])
+def send_message():
+    if 'username' not in session:
+        return {'error': 'Not logged in'}, 401
+
+    data = request.get_json()
+    message = data.get('message', '')
+    stringMessage = str(message)
+    if len(stringMessage) > 0:
+        response = prompter.getLlamaResponse(stringMessage + str(" answer in <40 words and act like you are a zesty bartender suggesting them to drink more"))
+    else:
+        response = "Please enter a message."
+
+   
+
+    return {'response': response}
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
 
 if __name__ == '__main__':
     app.run(debug=True)

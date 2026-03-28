@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Bartender</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            color: #333;
+        }
+        
+        .bartender-image-window {
+            width: 100%;
+            aspect-ratio: 4 / 3;
+            background-color: #e0e0e0;
+            border: 2px solid #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .bartender-image-window img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .bartender-image-window.no-image {
+            color: #999;
+            font-size: 16px;
+        }
+        
+        .caption-window {
+            width: 100%;
+            min-height: 80px;
+            background-color: white;
+            border: 2px solid #333;
+            padding: 15px;
+            border-radius: 4px;
+            font-size: 14px;
+            color: #333;
+            overflow-y: auto;
+            max-height: 120px;
+        }
+        
+        .input-section {
+            width: 100%;
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-section input {
+            flex: 1;
+            padding: 12px 15px;
+            font-size: 14px;
+            border: 2px solid #333;
+            border-radius: 4px;
+        }
+
+        .input-section button {
+            padding: 12px 20px;
+            background-color: #333;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .input-section button:hover {
+            background-color: #555;
+        }
+
+        .mic-button {
+            padding: 12px 20px;
+            background-color: #666;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            min-width: 50px;
+        }
+
+        .mic-button:hover {
+            background-color: #888;
+        }
+
+        .mic-button.listening {
+            background-color: #e74c3c;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .status-text {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+            min-height: 16px;
+        }
+        
+        .logout-btn {
+            align-self: flex-start;
+            padding: 10px 15px;
+            background-color: #999;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+        
+        .logout-btn:hover {
+            background-color: #777;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>AI Bartender</h1>
+        </div>
+        
+        <div class="bartender-image-window no-image" id="bartenderImage">
+            No image yet
+        </div>
+        
+        <div class="caption-window" id="captionWindow">
+            Bartender will respond here...
+        </div>
+        
+        <div class="input-section">
+            <input type="text" id="userInput" placeholder="Type your message here...">
+            <button class="mic-button" id="micButton" onclick="toggleSpeechRecognition()" title="Click to speak">🎤</button>
+            <button onclick="sendMessage()">Send</button>
+        </div>
+        <div class="status-text" id="statusText"></div>
+        
+        <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+    
+    <script>
+        // Speech Recognition Setup
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let recognition = null;
+        let isListening = false;
+
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = true;
+            recognition.lang = 'en-US';
+
+            recognition.onstart = function() {
+                isListening = true;
+                document.getElementById('micButton').classList.add('listening');
+                document.getElementById('statusText').textContent = 'Listening...';
+            };
+
+            recognition.onresult = function(event) {
+                let interimTranscript = '';
+                let finalTranscript = '';
+
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    const transcript = event.results[i][0].transcript;
+
+                    if (event.results[i].isFinal) {
+                        finalTranscript += transcript + ' ';
+                    } else {
+                        interimTranscript += transcript;
+                    }
+                }
+
+                // Update input box with final transcript
+                if (finalTranscript) {
+                    const input = document.getElementById('userInput');
+                    input.value = finalTranscript;
+                    document.getElementById('statusText').textContent = '';
+                }
+            };
+
+            recognition.onerror = function(event) {
+                document.getElementById('statusText').textContent = 'Error: ' + event.error;
+            };
+
+            recognition.onend = function() {
+                isListening = false;
+                document.getElementById('micButton').classList.remove('listening');
+                document.getElementById('statusText').textContent = '';
+            };
+        } else {
+            // Speech recognition not supported
+            document.getElementById('micButton').disabled = true;
+            document.getElementById('statusText').textContent = 'Speech recognition not supported in this browser';
+        }
+
+        function toggleSpeechRecognition() {
+            if (!recognition) {
+                alert('Speech recognition not supported in this browser');
+                return;
+            }
+
+            if (isListening) {
+                recognition.stop();
+            } else {
+                document.getElementById('userInput').value = '';
+                recognition.start();
+            }
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('userInput');
+            const message = input.value.trim();
+
+            if (message === '') return;
+
+            // Send to backend
+            fetch('/send_message', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ message: message })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Update caption window with response
+                document.getElementById('captionWindow').textContent = data.response || 'No response';
+                // Clear input
+                input.value = '';
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        function logout() {
+            window.location.href = '/logout';
+        }
+
+        // Allow Enter key to send message
+        document.getElementById('userInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
