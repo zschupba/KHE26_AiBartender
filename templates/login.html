@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Login</title>
+</head>
+<body>
+    <h2>Login Page</h2>
+    
+    <form method="POST">
+        <div>
+            <label>Username:</label>
+            <input type="text" name="username" required>
+        </div>
+        <br>
+        <div>
+            <label>Password:</label>
+            <input type="password" name="password" required>
+        </div>
+        <br>
+        <button type="submit" id="submit" name="submit">Log In</button>
+    </form>
+
+    <p><button onclick="window.location.href='/register'">Register</button></p>
+
+    {% if error %}
+    <p style="color: red;">{{ error }}</p>
+    {% endif %}
+
+    <p><small>Hint:admin / 123</small></p>
+</body>
+</html>
