@@ -1,127 +1,190 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>AI Bartender</title>
+    <title>Rex the AI Bartender</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Lato:wght@400;700&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
-            font-family: Arial, sans-serif;
-            background-color: #8B5A2A;
-            padding: 20px;
+            min-height: 100vh;
+            font-family: 'Lato', sans-serif;
+            background-color: #3B1F0A;
+            background-image:
+                radial-gradient(ellipse at 20% 50%, rgba(139, 69, 19, 0.6) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 20%, rgba(101, 47, 10, 0.7) 0%, transparent 55%),
+                radial-gradient(ellipse at 60% 80%, rgba(80, 35, 5, 0.5) 0%, transparent 50%),
+                url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.02'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            padding: 24px 16px;
         }
-        
+
         .container {
-            max-width: 800px;
+            max-width: 720px;
             margin: 0 auto;
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 14px;
         }
-        
+
+        /* Header */
         .header {
             text-align: center;
-            margin-bottom: 10px;
+            padding: 10px 0 4px;
         }
-        
+
         .header h1 {
-            font-size: 28px;
-            color: #333;
+            font-family: 'Playfair Display', serif;
+            font-size: 32px;
+            color: #FFF8E7;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 12px rgba(0,0,0,0.4);
         }
-        
+
+        .header .subtitle {
+            font-size: 11px;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            color: #C49A55;
+            margin-top: 4px;
+        }
+
+        /* BAC Box */
+        .bac-box {
+            background: rgba(255, 248, 235, 0.95);
+            border: 1.5px solid #C49A55;
+            padding: 10px 20px;
+            border-radius: 8px;
+            color: #3B1F0A;
+            font-weight: 700;
+            font-size: 14px;
+            letter-spacing: 0.8px;
+            width: fit-content;
+            margin: 0 auto;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+        }
+
+        /* Image Window */
         .bartender-image-window {
             width: 100%;
             aspect-ratio: 4 / 3;
-            background-color: #e0e0e0;
-            border: 2px solid #333;
+            background-color: #2A1205;
+            border: 2px solid rgba(196, 154, 85, 0.5);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow:
+                0 8px 32px rgba(0,0,0,0.5),
+                inset 0 0 40px rgba(0,0,0,0.3);
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 4px;
-            overflow: hidden;
         }
-        
+
         .bartender-image-window img {
             width: 100%;
             height: 100%;
-            background-color: #BA6F1E;
             object-fit: contain;
+            background-color: #2A1205;
             transition: opacity 0.4s ease;
         }
 
         .bartender-image-window img.fade {
             opacity: 0;
         }
-        
-        .bartender-image-window.no-image {
-            color: #999;
-            font-size: 16px;
-        }
-        
+
+        /* Caption Window */
         .caption-window {
             width: 100%;
             min-height: 80px;
-            background-color: #BA6F1E;
-            border: 2px solid white;
-            padding: 15px;
-            border-radius: 4px;
+            max-height: 130px;
+            background: rgba(255, 248, 235, 0.95);
+            border: 1.5px solid rgba(196, 154, 85, 0.6);
+            padding: 16px 18px;
+            border-radius: 8px;
             font-size: 14px;
-            color: #333;
+            line-height: 1.6;
+            color: #2C1608;
             overflow-y: auto;
-            max-height: 120px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.3);
         }
-        
+
+        /* Input Section */
         .input-section {
             width: 100%;
             display: flex;
-            gap: 10px;
+            gap: 8px;
         }
 
         .input-section input {
             flex: 1;
-            padding: 12px 15px;
+            padding: 13px 16px;
             font-size: 14px;
-            border: 2px solid #333;
-            border-radius: 4px;
+            font-family: 'Lato', sans-serif;
+            border: 1.5px solid rgba(196, 154, 85, 0.5);
+            border-radius: 8px;
+            background: rgba(255, 248, 235, 0.95);
+            color: #2C1608;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
         }
 
-        .input-section button {
-            padding: 12px 20px;
-            background-color: #333;
-            color: white;
+        .input-section input:focus {
+            border-color: #C49A55;
+            box-shadow: 0 0 0 3px rgba(196, 154, 85, 0.2);
+        }
+
+        .input-section input::placeholder {
+            color: #B09060;
+        }
+
+        .send-btn {
+            padding: 13px 22px;
+            background: linear-gradient(135deg, #8B4513 0%, #6B3310 100%);
+            color: #FFF8E7;
             border: none;
-            border-radius: 4px;
+            border-radius: 8px;
             cursor: pointer;
-            font-size: 14px;
-            font-weight: bold;
+            font-family: 'Lato', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+            box-shadow: 0 4px 14px rgba(139, 69, 19, 0.4);
         }
 
-        .input-section button:hover {
-            background-color: #555;
+        .send-btn:hover {
+            background: linear-gradient(135deg, #A0521A 0%, #7A3D14 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(139, 69, 19, 0.5);
+        }
+
+        .send-btn:active {
+            transform: translateY(0);
         }
 
         .mic-button {
-            padding: 12px 20px;
-            background-color: #666;
-            color: white;
-            border: none;
-            border-radius: 4px;
+            padding: 13px 16px;
+            background: rgba(255, 248, 235, 0.15);
+            color: #FFF8E7;
+            border: 1.5px solid rgba(196, 154, 85, 0.4);
+            border-radius: 8px;
             cursor: pointer;
-            font-size: 14px;
-            font-weight: bold;
+            font-size: 16px;
+            transition: background 0.2s;
             min-width: 50px;
         }
 
         .mic-button:hover {
-            background-color: #888;
+            background: rgba(255, 248, 235, 0.25);
         }
 
         .mic-button.listening {
             background-color: #e74c3c;
+            border-color: #e74c3c;
             animation: pulse 1s infinite;
         }
 
@@ -131,74 +194,71 @@
         }
 
         .status-text {
-            font-size: 12px;
-            color: #666;
-            margin-top: 5px;
+            font-size: 11px;
+            color: #C49A55;
+            letter-spacing: 0.5px;
             min-height: 16px;
-        }
-        
-        .logout-btn {
-            align-self: flex-start;
-            padding: 10px 15px;
-            background-color: #999;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
-            margin-top: 10px;
-        }
-        
-        .logout-btn:hover {
-            background-color: #777;
+            text-align: center;
         }
 
-        .bac-box {
-            background: rgba(255,255,255,0.9);
-            border: 2px solid #333;
-            padding: 10px;
+        .bottom-row {
+            display: flex;
+            justify-content: flex-start;
+        }
+
+        .logout-btn {
+            padding: 9px 18px;
+            background: rgba(255, 255, 255, 0.08);
+            color: #C49A55;
+            border: 1.5px solid rgba(196, 154, 85, 0.35);
             border-radius: 6px;
-            color: #222;
-            font-weight: bold;
-            width: fit-content;
-            margin: 0 auto 10px;
-            box-shadow: 0 0 8px rgba(0,0,0,0.2);
+            cursor: pointer;
+            font-family: 'Lato', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: #FFF8E7;
         }
     </style>
 </head>
 <body>
     <div class="container">
+
         <div class="header">
-            <h1>AI Bartender</h1>
+            <h1>🥃 Rex the AI Bartender</h1>
+            <p class="subtitle">Your Personal Drinking Companion</p>
         </div>
 
         <div class="bac-box" id="bacBox">Current BAC: 0.00%</div>
-        
+
         <div class="bartender-image-window" id="bartenderImage">
             <img id="bartenderImg" src="{{ url_for('static', filename='1stRexListening.png') }}" alt="Bartender">
         </div>
-        
+
         <div class="caption-window" id="captionWindow">
             Bartender will respond here...
         </div>
-        
+
         <div class="input-section">
-            <input type="text" id="userInput" placeholder="Type your message here...">
+            <input type="text" id="userInput" placeholder="Say something to Rex...">
             <button class="mic-button" id="micButton" onclick="toggleSpeechRecognition()" title="Click to speak">🎤</button>
-            <button onclick="sendMessage()">Send</button>
+            <button class="send-btn" onclick="sendMessage()">Send</button>
         </div>
         <div class="status-text" id="statusText"></div>
-        
-        <button class="logout-btn" onclick="logout()">Logout</button>
+
+        <div class="bottom-row">
+            <button class="logout-btn" onclick="logout()">← Logout</button>
+        </div>
+
     </div>
-    
+
     <script>
-        // BAC → image mapping
-        // 0.00–0.03 → Listening (sober, attentive)
-        // 0.04–0.06 → Serving  (light buzz)
-        // 0.07–0.10 → Laughing (getting loose)
-        // 0.11–0.14 → Serious  (getting concerned)
-        // 0.15+     → Lecturing (cut off mode)
         function getImageForBAC(bac) {
             if (bac >= 0.15) return '1stRexLecturing.png';
             if (bac >= 0.11) return '1stRexSerious.png';
@@ -208,20 +268,19 @@
         }
 
         function updateBartenderImage(bac) {
-        const img = document.getElementById('bartenderImg');
-        const newFilename = getImageForBAC(bac);
-        const newSrc = `/static/${newFilename}`;
+            const img = document.getElementById('bartenderImg');
+            const newFilename = getImageForBAC(bac);
+            const newSrc = `/static/${newFilename}`;
 
-        // Compare just the filename portion to avoid URL format mismatches
-        if (img.src.includes(newFilename)) return;
+            if (img.src.includes(newFilename)) return;
 
-        img.classList.add('fade');
-        setTimeout(() => {
-            img.src = newSrc;
-            img.classList.remove('fade');
-        }, 400);
-    }
-        // Speech Recognition Setup
+            img.classList.add('fade');
+            setTimeout(() => {
+                img.src = newSrc;
+                img.classList.remove('fade');
+            }, 400);
+        }
+
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         let recognition = null;
         let isListening = false;
@@ -240,14 +299,10 @@
 
             recognition.onresult = function(event) {
                 let finalTranscript = '';
-
                 for (let i = event.resultIndex; i < event.results.length; i++) {
                     const transcript = event.results[i][0].transcript;
-                    if (event.results[i].isFinal) {
-                        finalTranscript += transcript + ' ';
-                    }
+                    if (event.results[i].isFinal) finalTranscript += transcript + ' ';
                 }
-
                 if (finalTranscript) {
                     document.getElementById('userInput').value = finalTranscript;
                     document.getElementById('statusText').textContent = '';
@@ -269,13 +324,8 @@
         }
 
         function toggleSpeechRecognition() {
-            if (!recognition) {
-                alert('Speech recognition not supported in this browser');
-                return;
-            }
-            if (isListening) {
-                recognition.stop();
-            } else {
+            if (!recognition) { alert('Speech recognition not supported in this browser'); return; }
+            if (isListening) { recognition.stop(); } else {
                 document.getElementById('userInput').value = '';
                 recognition.start();
             }
@@ -284,7 +334,6 @@
         function sendMessage() {
             const input = document.getElementById('userInput');
             const message = input.value.trim();
-
             if (message === '') return;
 
             fetch('/send_message', {
@@ -295,21 +344,17 @@
             .then(response => response.json())
             .then(data => {
                 document.getElementById('captionWindow').textContent = data.response || 'No response';
-
                 if (data.bac !== undefined) {
                     const bac = parseFloat(data.bac);
                     document.getElementById('bacBox').textContent = `Current BAC: ${bac.toFixed(2)}%`;
                     updateBartenderImage(bac);
                 }
-
                 input.value = '';
             })
             .catch(error => console.error('Error:', error));
         }
 
-        function logout() {
-            window.location.href = '/logout';
-        }
+        function logout() { window.location.href = '/logout'; }
 
         document.getElementById('userInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') sendMessage();

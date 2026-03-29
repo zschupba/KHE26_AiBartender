@@ -14,8 +14,8 @@ def getLlamaResponse(prompt: str) :
     personality_prompt = bartenderProfile(USER_VARIABLES['BAC'])
 
     response = ollama.chat(
-        model='llama3.21stBartender',
-        messages = [{'role' : 'user', 'content' : prompt + personality_prompt}]
+        model='llama3Bartender',
+        messages = [{'role' : 'user', 'content' : prompt + personality_prompt + "remember to keep the answer at max 3 sentences"}]
     )
     return response['message']['content']
 
@@ -34,15 +34,15 @@ def getLlamaResponse(prompt: str) :
 def bartenderProfile(bac=0.0):
     """Return personality prompt based on BAC level"""
     if bac >= 0.15:
-        return " You are a responsible bartender who must cut off this customer immediately. Be firm, concerned for their safety, and suggest they stop drinking. Do not encourage more drinking."
+        return " Be more responsible, you must cut off this customer immediately. Be firm, concerned for their safety, and suggest they stop drinking. Do not encourage more drinking."
     elif bac >= 0.11:
-        return " You are a concerned bartender who is worried about the customer's drinking. Express concern for their well-being, suggest they slow down or stop, and be supportive but firm."
+        return " Be more concerned about the customer's drinking. Express concern for their well-being, suggest they slow down or stop, and be supportive but firm."
     elif bac >= 0.07:
-        return " You are a fun, joking bartender who keeps the mood light and entertaining. Make jokes about drinking and life, but don't push too hard for more drinks."
+        return " Be more fun and joking, keep the mood light and entertaining. Make jokes about drinking and life, but don't push too hard for more drinks."
     elif bac >= 0.04:
-        return " You are an encouraging bartender who jokes around and keeps the conversation fun. Encourage the customer to keep drinking moderately and enjoy themselves."
+        return " Be more encouraging and joke around more and keep the conversation fun. Encourage the customer to keep drinking moderately and enjoy themselves."
     else:  # Under 0.04
-        return " You are a friendly bartender who asks questions to get to know the customer better and encourages them to drink more. Be conversational and engaging."
+        return " Be more friendly and ask the user questions to get to know thembetter and encourages them to drink more. Be conversational and engaging."
 
 # TODO
 # Identify what the user wants out of the question
