@@ -113,6 +113,16 @@ def send_message():
     if 'username' not in session:
         return {'error': 'Not logged in'}, 401
 
+    # Get user id from username
+    with get_db() as conn:
+        result = conn.execute('SELECT id FROM users WHERE username = ?', (session['username'],)).fetchone()
+        if not result:
+            return {'error': 'User not found'}, 404
+        user_id = result[0]
+
+    # Load user data from database before processing
+    prompter.loadUserData(user_id)
+
     data = request.get_json()
     message = data.get('message', '')
     stringMessage = str(message)
@@ -121,8 +131,11 @@ def send_message():
     else:
         response = "Please enter a message."
 
-    # Include current BAC from prompter state (default 0.0 if unavailable)
-    bac = getattr(prompter, 'USER_VARIABLES', {}).get('BAC', 0.0)
+    # Save updated user data back to database
+    prompter.saveUserData(user_id)
+
+    # Include current BAC from prompter state
+    bac = prompter.USER_VARIABLES.get('BAC', 0.0)
 
     return {'response': response, 'bac': bac}
 

@@ -49,6 +49,7 @@ def parseUserInput(text):
     storeUserData("standardDrinks", USER_VARIABLES['standardDrinks'] + drinks)
     print("BAC: " + str(calculate_bac(USER_VARIABLES['standardDrinks'])))
     storeUserData("BAC", calculate_bac(USER_VARIABLES['standardDrinks']))
+    print("New BAC: " + str(USER_VARIABLES['BAC']))
 
     
     
@@ -77,74 +78,57 @@ def storeUserData(variable, info):
 
 
 def initDatabase(db_path='users.db'):
-    """Create user_profile table if it doesn't exist."""
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS user_profile (
-            user_id INTEGER PRIMARY KEY,
-            nickname TEXT,
-            sex TEXT,
-            weight INTEGER,
-            age INTEGER,
-            favorite_drink TEXT,
-            likes TEXT,
-            dislikes TEXT,
-            avoid TEXT,
-            standardDrinks DEFAULT 0.0,
-            bac REAL DEFAULT 0.0,
-            timeDrinking 
-        )
-    ''')
-    conn.commit()
-    conn.close()
+    """Initialize database (table created in schema.sql)."""
+    pass
 
 
 def createUserProfile(user_id, db_path='users.db'):
     """Create a new user profile with default values after registration."""
-    initDatabase(db_path)
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     cursor.execute('''
-        INSERT INTO user_profile (user_id, sex, weight, alc_grams_consumed, bac)
-        VALUES (?, ?, ?, ?, ?)
-    ''', (user_id, 'male', 170, 0, 0.0))
+        UPDATE users 
+        SET sex = ?, weight = ?, standardDrinks = ?, BAC = ?, timeDrinking = ?
+        WHERE id = ?
+    ''', ('male', 170, 0, 0.0, 0.5, user_id))
     conn.commit()
     conn.close()
 
 
 def loadUserData(user_id, db_path='users.db'):
-    """Load user data from database into USER_VARIABLES. Profile guaranteed to exist."""
+    """Load user data from database into USER_VARIABLES."""
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
-    cursor.execute('SELECT * FROM user_profile WHERE user_id = ?', (user_id,))
+    cursor.execute('SELECT * FROM users WHERE id = ?', (user_id,))
     row = cursor.fetchone()
     conn.close()
     
-    # row: (user_id, nickname, sex, weight, age, favorite_drink, likes, dislikes, avoid, alc_grams_consumed, bac, time_drinking)
-    USER_VARIABLES['nickname'] = row[1]
-    USER_VARIABLES['sex'] = row[2] or 'male'  # Default to male if NULL
-    USER_VARIABLES['weight'] = row[3] or 170  # Default to 170 lbs if NULL
-    USER_VARIABLES['age'] = row[4]
-    USER_VARIABLES['favoriteDrink'] = row[5]
-    USER_VARIABLES['likes'] = row[6]
-    USER_VARIABLES['dislikes'] = row[7]
-    USER_VARIABLES['avoid'] = row[8]
-    USER_VARIABLES['standardDrinks'] = row[9] or 0
-    USER_VARIABLES['BAC'] = row[10] or 0.0
-    USER_VARIABLES['timeDrinking'] = row[11]
+    if not row:
+        return  # User not found
+    
+    # Safely extract data with defaults for missing columns
+    USER_VARIABLES['nickname'] = row[3] if len(row) > 3 else None
+    USER_VARIABLES['sex'] = row[4] if len(row) > 4 else 'male'
+    USER_VARIABLES['weight'] = row[5] if len(row) > 5 else 170
+    USER_VARIABLES['age'] = row[6] if len(row) > 6 else None
+    USER_VARIABLES['favoriteDrink'] = row[7] if len(row) > 7 else None
+    USER_VARIABLES['likes'] = row[8] if len(row) > 8 else None
+    USER_VARIABLES['dislikes'] = row[9] if len(row) > 9 else None
+    USER_VARIABLES['avoid'] = row[10] if len(row) > 10 else None
+    USER_VARIABLES['standardDrinks'] = row[11] if len(row) > 11 else 0
+    USER_VARIABLES['BAC'] = row[12] if len(row) > 12 else 0.0
+    USER_VARIABLES['timeDrinking'] = row[13] if len(row) > 13 else 0.5
 
 
 def saveUserData(user_id, db_path='users.db'):
     """Save USER_VARIABLES to database."""
-    initDatabase(db_path)
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     cursor.execute('''
-        UPDATE user_profile 
+        UPDATE users 
         SET nickname = ?, sex = ?, weight = ?, age = ?, favoriteDrink = ?,
             likes = ?, dislikes = ?, avoid = ?, standardDrinks = ?, BAC = ?, timeDrinking = ?
-        WHERE user_id = ?
+        WHERE id = ?
     ''', (
         USER_VARIABLES['nickname'],
         USER_VARIABLES['sex'],
@@ -191,7 +175,7 @@ W = body weight in grams
 r = sex-based Widmark factor
 t = hours since consumption (with 0.5hr lag)
 """
-def calculate_bac(drinks = 0, timeDrinking = 0.5, weight_lbs = 170, sex = 'male'):
+def calculate_bac(drinks = 0, timeDrinking = 0, weight_lbs = 170, sex = 'male'):
     if not weight_lbs:
         return 0.0
 
@@ -202,7 +186,7 @@ def calculate_bac(drinks = 0, timeDrinking = 0.5, weight_lbs = 170, sex = 'male'
 
     for drink in range(int(drinks)):
 
-        contribution = (0.6 / (weight_g * r)) * 100
+        contribution = (0.6 / (weight_g * r)) * 1000
         # Subtract metabolism (0.015%/hr) after 30-min absorption lag
         absorbed_hours = max(0, timeDrinking - 0.5)
         contribution -= 0.015 * absorbed_hours
