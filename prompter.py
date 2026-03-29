@@ -11,10 +11,11 @@ def getLlamaResponse(prompt: str) :
     # Calculate BAC and update user profile
 
     # Determine bartender response based on user input, profile, and conversation context
+    personality_prompt = bartenderProfile(USER_VARIABLES['BAC'])
 
     response = ollama.chat(
         model='llama3.21stBartender',
-        messages = [{'role' : 'user', 'content' : prompt}]
+        messages = [{'role' : 'user', 'content' : prompt + personality_prompt}]
     )
     return response['message']['content']
 
@@ -30,8 +31,18 @@ def getLlamaResponse(prompt: str) :
 #         print("\n")
         
 # returns how the bartender is going to respond and what image should be displayed
-def bartenderProfile():
-    print("test1")
+def bartenderProfile(bac=0.0):
+    """Return personality prompt based on BAC level"""
+    if bac >= 0.15:
+        return " You are a responsible bartender who must cut off this customer immediately. Be firm, concerned for their safety, and suggest they stop drinking. Do not encourage more drinking."
+    elif bac >= 0.11:
+        return " You are a concerned bartender who is worried about the customer's drinking. Express concern for their well-being, suggest they slow down or stop, and be supportive but firm."
+    elif bac >= 0.07:
+        return " You are a fun, joking bartender who keeps the mood light and entertaining. Make jokes about drinking and life, but don't push too hard for more drinks."
+    elif bac >= 0.04:
+        return " You are an encouraging bartender who jokes around and keeps the conversation fun. Encourage the customer to keep drinking moderately and enjoy themselves."
+    else:  # Under 0.04
+        return " You are a friendly bartender who asks questions to get to know the customer better and encourages them to drink more. Be conversational and engaging."
 
 # TODO
 # Identify what the user wants out of the question
@@ -45,7 +56,8 @@ def bartenderProfile():
 # Parses user input to identify drinks mentioned, user information, and intent
 def parseUserInput(text):
     drinks = detect_drink_mention(text)
-    
+    if drinks == None:
+        drinks = 0
     storeUserData("standardDrinks", USER_VARIABLES['standardDrinks'] + drinks)
     print("BAC: " + str(calculate_bac(USER_VARIABLES['standardDrinks'])))
     storeUserData("BAC", calculate_bac(USER_VARIABLES['standardDrinks']))
@@ -186,7 +198,7 @@ def calculate_bac(drinks = 0, timeDrinking = 0, weight_lbs = 170, sex = 'male'):
 
     for drink in range(int(drinks)):
 
-        contribution = (0.6 / (weight_g * r)) * 1000
+        contribution = (14 / (weight_g * r)) * 100
         # Subtract metabolism (0.015%/hr) after 30-min absorption lag
         absorbed_hours = max(0, timeDrinking - 0.5)
         contribution -= 0.015 * absorbed_hours

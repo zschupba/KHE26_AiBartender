@@ -48,7 +48,13 @@
         .bartender-image-window img {
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            background-color: #BA6F1E;
+            object-fit: contain;
+            transition: opacity 0.4s ease;
+        }
+
+        .bartender-image-window img.fade {
+            opacity: 0;
         }
         
         .bartender-image-window.no-image {
@@ -168,8 +174,8 @@
 
         <div class="bac-box" id="bacBox">Current BAC: 0.00%</div>
         
-        <div class="bartender-image-window Listening" id="bartenderImage">
-            <img src="{{ url_for('static', filename='1stRexListening.png') }}" alt="Bartender">
+        <div class="bartender-image-window" id="bartenderImage">
+            <img id="bartenderImg" src="{{ url_for('static', filename='1stRexListening.png') }}" alt="Bartender">
         </div>
         
         <div class="caption-window" id="captionWindow">
@@ -187,6 +193,34 @@
     </div>
     
     <script>
+        // BAC → image mapping
+        // 0.00–0.03 → Listening (sober, attentive)
+        // 0.04–0.06 → Serving  (light buzz)
+        // 0.07–0.10 → Laughing (getting loose)
+        // 0.11–0.14 → Serious  (getting concerned)
+        // 0.15+     → Lecturing (cut off mode)
+        function getImageForBAC(bac) {
+            if (bac >= 0.15) return '1stRexLecturing.png';
+            if (bac >= 0.11) return '1stRexSerious.png';
+            if (bac >= 0.07) return '1stRexLaughing.png';
+            if (bac >= 0.04) return '1stRexServing.png';
+            return '1stRexListening.png';
+        }
+
+        function updateBartenderImage(bac) {
+        const img = document.getElementById('bartenderImg');
+        const newFilename = getImageForBAC(bac);
+        const newSrc = `/static/${newFilename}`;
+
+        // Compare just the filename portion to avoid URL format mismatches
+        if (img.src.includes(newFilename)) return;
+
+        img.classList.add('fade');
+        setTimeout(() => {
+            img.src = newSrc;
+            img.classList.remove('fade');
+        }, 400);
+    }
         // Speech Recognition Setup
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         let recognition = null;
@@ -205,23 +239,17 @@
             };
 
             recognition.onresult = function(event) {
-                let interimTranscript = '';
                 let finalTranscript = '';
 
                 for (let i = event.resultIndex; i < event.results.length; i++) {
                     const transcript = event.results[i][0].transcript;
-
                     if (event.results[i].isFinal) {
                         finalTranscript += transcript + ' ';
-                    } else {
-                        interimTranscript += transcript;
                     }
                 }
 
-                // Update input box with final transcript
                 if (finalTranscript) {
-                    const input = document.getElementById('userInput');
-                    input.value = finalTranscript;
+                    document.getElementById('userInput').value = finalTranscript;
                     document.getElementById('statusText').textContent = '';
                 }
             };
@@ -236,7 +264,6 @@
                 document.getElementById('statusText').textContent = '';
             };
         } else {
-            // Speech recognition not supported
             document.getElementById('micButton').disabled = true;
             document.getElementById('statusText').textContent = 'Speech recognition not supported in this browser';
         }
@@ -246,7 +273,6 @@
                 alert('Speech recognition not supported in this browser');
                 return;
             }
-
             if (isListening) {
                 recognition.stop();
             } else {
@@ -261,25 +287,21 @@
 
             if (message === '') return;
 
-            // Send to backend
             fetch('/send_message', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ message: message })
             })
             .then(response => response.json())
             .then(data => {
-                // Update caption window with response
                 document.getElementById('captionWindow').textContent = data.response || 'No response';
 
-                // Update BAC display when provided by backend. If missing, keep existing value.
                 if (data.bac !== undefined) {
-                    document.getElementById('bacBox').textContent = `Current BAC: ${parseFloat(data.bac).toFixed(2)}%`;
+                    const bac = parseFloat(data.bac);
+                    document.getElementById('bacBox').textContent = `Current BAC: ${bac.toFixed(2)}%`;
+                    updateBartenderImage(bac);
                 }
 
-                // Clear input
                 input.value = '';
             })
             .catch(error => console.error('Error:', error));
@@ -289,11 +311,8 @@
             window.location.href = '/logout';
         }
 
-        // Allow Enter key to send message
         document.getElementById('userInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                sendMessage();
-            }
+            if (e.key === 'Enter') sendMessage();
         });
     </script>
 </body>

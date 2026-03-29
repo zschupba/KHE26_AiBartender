@@ -106,6 +106,20 @@ def register():
 def bartender():
     if 'username' not in session:
         return redirect(url_for('login'))
+    
+    # Get user id and reset drinks data on login
+    with get_db() as conn:
+        result = conn.execute('SELECT id FROM users WHERE username = ?', (session['username'],)).fetchone()
+        if result:
+            user_id = result[0]
+            # Reset drinks and BAC but keep other user data
+            conn.execute('''
+                UPDATE users 
+                SET standardDrinks = 0, BAC = 0.0, timeDrinking = 0.5
+                WHERE id = ?
+            ''', (user_id,))
+            conn.commit()
+    
     return render_template('bartender.html')
 
 @app.route('/send_message', methods=['POST'])
