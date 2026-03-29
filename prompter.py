@@ -2,7 +2,9 @@
 
 import ollama
 import sqlite3
+import re
 import os
+import random
 from datetime import datetime 
 
 def getLlamaResponse(prompt: str) :
@@ -11,11 +13,17 @@ def getLlamaResponse(prompt: str) :
     # Calculate BAC and update user profile
 
     # Determine bartender response based on user input, profile, and conversation context
-    personality_prompt = bartenderProfile(USER_VARIABLES['BAC'])
+    personalityPrompt = bartenderProfile(USER_VARIABLES['BAC'])
+    fullPrompt = (
+        prompt 
+        + personalityPrompt
+        + "Remember to keep the answer to max 3 sentences unless its cybersecurity related"
+    )
+
 
     response = ollama.chat(
         model='llama3Bartender',
-        messages = [{'role' : 'user', 'content' : prompt + personality_prompt + "remember to keep the answer at max 3 sentences"}]
+        messages = [{'role' : 'user', 'content' : fullPrompt}]
     )
     return response['message']['content']
 
@@ -49,9 +57,9 @@ def bartenderProfile(bac=0.0):
 # Is the user wanting to rant, drink a lot, telling them their statistics, etc
 # Allow user to choose the base personality if they want to rant, talk deeply, safe drinking, etc
 
-# -Listening, talking, suggesting, mentoring, distracting, drinking, encouragement after purchase,
 # Target response due to circumstances/ what user wants/ update the picture
 # Build the different personalities/ add mode to find out more about the user
+
 
 # Parses user input to identify drinks mentioned, user information, and intent
 def parseUserInput(text):
@@ -215,7 +223,7 @@ def detect_drink_mention(text):
     # Order matters — more specific matches first
     ordered = ['light beer', 'beer', 'ipa', 'hard seltzer', 'old fashioned', 'margarita',
                 'bourbon', 'whiskey', 'tequila', 'vodka', 'rum',
-               'gin', 'cocktail', 'wine', 'shot', 'mixed drink', 'drink']
+               'gin', 'cocktail', 'wine', 'shot', 'mixed drink']
 
     for key in ordered:
         if key in text_lower:

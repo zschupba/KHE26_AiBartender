@@ -1,34 +1,203 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Register</title>
+    <title>Rex the AI Bartender — Register</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Lato:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Lato', sans-serif;
+            background-color: #3B1F0A;
+            background-image:
+                radial-gradient(ellipse at 20% 50%, rgba(139, 69, 19, 0.6) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 20%, rgba(101, 47, 10, 0.7) 0%, transparent 55%),
+                radial-gradient(ellipse at 60% 80%, rgba(80, 35, 5, 0.5) 0%, transparent 50%),
+                url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.02'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        .card {
+            background: rgba(255, 248, 235, 0.97);
+            border-radius: 12px;
+            padding: 50px 45px 40px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow:
+                0 20px 60px rgba(0, 0, 0, 0.5),
+                0 0 0 1px rgba(200, 140, 60, 0.3);
+            text-align: center;
+        }
+
+        .card-icon {
+            font-size: 42px;
+            margin-bottom: 8px;
+        }
+
+        h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 28px;
+            color: #3B1F0A;
+            margin-bottom: 6px;
+            letter-spacing: 0.5px;
+        }
+
+        .subtitle {
+            font-size: 13px;
+            color: #9A6B3A;
+            margin-bottom: 32px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .divider {
+            border: none;
+            border-top: 1px solid #E8D5B0;
+            margin-bottom: 28px;
+        }
+
+        .field {
+            text-align: left;
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            color: #7A4F20;
+            margin-bottom: 6px;
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            padding: 12px 14px;
+            font-size: 14px;
+            font-family: 'Lato', sans-serif;
+            border: 1.5px solid #D4B483;
+            border-radius: 6px;
+            background: #FFFDF7;
+            color: #2C1608;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        input[type="text"]:focus,
+        input[type="password"]:focus {
+            border-color: #8B4513;
+            box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.12);
+        }
+
+        .btn-register {
+            width: 100%;
+            padding: 13px;
+            margin-top: 8px;
+            background: linear-gradient(135deg, #8B4513 0%, #6B3310 100%);
+            color: #FFF8E7;
+            font-family: 'Lato', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+            box-shadow: 0 4px 14px rgba(139, 69, 19, 0.4);
+        }
+
+        .btn-register:hover {
+            background: linear-gradient(135deg, #A0521A 0%, #7A3D14 100%);
+            box-shadow: 0 6px 18px rgba(139, 69, 19, 0.5);
+            transform: translateY(-1px);
+        }
+
+        .btn-register:active {
+            transform: translateY(0);
+        }
+
+        .login-section {
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid #E8D5B0;
+            font-size: 13px;
+            color: #9A6B3A;
+        }
+
+        .btn-login {
+            background: none;
+            border: 1.5px solid #C49A55;
+            color: #7A4F20;
+            font-family: 'Lato', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            padding: 8px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 10px;
+            letter-spacing: 0.8px;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .btn-login:hover {
+            background: #8B4513;
+            color: #FFF8E7;
+            border-color: #8B4513;
+        }
+
+        .error {
+            background: #FFF0F0;
+            border: 1px solid #F5C6C6;
+            color: #C0392B;
+            font-size: 13px;
+            padding: 10px 14px;
+            border-radius: 6px;
+            margin-bottom: 18px;
+            text-align: left;
+        }
+    </style>
 </head>
 <body>
-    <h2>Register</h2>
-    
-    <form method="POST">
-        <div>
-            <label>Username:</label>
-            <input type="text" name="username" required>
-        </div>
-        <br>
-        <div>
-            <label>Password:</label>
-            <input type="password" name="password" required>
-        </div>
-        <br>
-        <div>
-            <label>Confirm Password:</label>
-            <input type="password" name="confirm_password" required>
-        </div>
-        <br>
-        <button type="submit">Register</button>
-    </form>
+    <div class="card">
+        <div class="card-icon">🥃</div>
+        <h2>AI Bartender</h2>
+        <p class="subtitle">Create an Account</p>
+        <hr class="divider">
 
-    {% if error %}
-    <p style="color: red;">{{ error }}</p>
-    {% endif %}
+        {% if error %}
+        <div class="error">{{ error }}</div>
+        {% endif %}
 
-    <p><a href="/">Back to Login</a></p>
+        <form method="POST">
+            <div class="field">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required autocomplete="username">
+            </div>
+            <div class="field">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required autocomplete="new-password">
+            </div>
+            <div class="field">
+                <label for="confirm_password">Confirm Password</label>
+                <input type="password" id="confirm_password" name="confirm_password" required autocomplete="new-password">
+            </div>
+            <button type="submit" class="btn-register">Create Account</button>
+        </form>
+
+        <div class="login-section">
+            <span>Already have an account?</span><br>
+            <button class="btn-login" onclick="window.location.href='/'">Back to Login</button>
+        </div>
+    </div>
 </body>
 </html>
