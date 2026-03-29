@@ -89,8 +89,12 @@ def register():
             hashed_password = hash_password(password)
             try:
                 with get_db() as conn:
-                    conn.execute('INSERT INTO users (username, password) VALUES (?, ?)', (username, hashed_password))
+                    cursor = conn.cursor()
+                    cursor.execute('INSERT INTO users (username, password) VALUES (?, ?)', (username, hashed_password))
+                    user_id = cursor.lastrowid
                     conn.commit()
+                # Create user_profile with defaults
+                prompter.createUserProfile(user_id)
                 return redirect(url_for('login'))
             except sqlite3.IntegrityError:
                 error = "Username already exists."
