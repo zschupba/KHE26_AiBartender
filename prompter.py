@@ -13,7 +13,7 @@ def getLlamaResponse(prompt: str) :
     # Determine bartender response based on user input, profile, and conversation context
 
     response = ollama.chat(
-        model='llama3.2Bartender',
+        model='llama3.21stBartender',
         messages = [{'role' : 'user', 'content' : prompt}]
     )
     return response['message']['content']
@@ -44,9 +44,11 @@ def bartenderProfile():
 
 # Parses user input to identify drinks mentioned, user information, and intent
 def parseUserInput(text):
-    drink = detect_drink_mention(text)
-    storeUserData(alcoholGramsConsumed, calculateAlcGrams(drink['abv_pct'], drink['volume_oz']))
-    print(calculate_bac(USER_VARIABLES['alcGramsConsumed'], USER_VARIABLES['weight'], USER_VARIABLES['sex']))
+    drinks = detect_drink_mention(text)
+    
+    storeUserData("standardDrinks", USER_VARIABLES['standardDrinks'] + drinks)
+    print("BAC: " + str(calculate_bac(USER_VARIABLES['standardDrinks'])))
+    storeUserData("BAC", calculate_bac(USER_VARIABLES['standardDrinks']))
 
     
     
@@ -60,7 +62,7 @@ USER_VARIABLES = {
     'likes': None,
     'dislikes': None,
     'avoid': None,
-    'alcGramsConsumed': 0,
+    'standardDrinks': 0,
     'BAC': 0.0,
     'sessionStart': None
 }
@@ -89,9 +91,9 @@ def initDatabase(db_path='users.db'):
             likes TEXT,
             dislikes TEXT,
             avoid TEXT,
-            alc_grams_consumed REAL DEFAULT 0,
+            standardDrinks DEFAULT 0.0,
             bac REAL DEFAULT 0.0,
-            session_start DATETIME
+            timeDrinking 
         )
     ''')
     conn.commit()
@@ -119,7 +121,7 @@ def loadUserData(user_id, db_path='users.db'):
     row = cursor.fetchone()
     conn.close()
     
-    # row: (user_id, nickname, sex, weight, age, favorite_drink, likes, dislikes, avoid, alc_grams_consumed, bac, session_start)
+    # row: (user_id, nickname, sex, weight, age, favorite_drink, likes, dislikes, avoid, alc_grams_consumed, bac, time_drinking)
     USER_VARIABLES['nickname'] = row[1]
     USER_VARIABLES['sex'] = row[2] or 'male'  # Default to male if NULL
     USER_VARIABLES['weight'] = row[3] or 170  # Default to 170 lbs if NULL
@@ -128,9 +130,9 @@ def loadUserData(user_id, db_path='users.db'):
     USER_VARIABLES['likes'] = row[6]
     USER_VARIABLES['dislikes'] = row[7]
     USER_VARIABLES['avoid'] = row[8]
-    USER_VARIABLES['alcGramsConsumed'] = row[9] or 0
+    USER_VARIABLES['standardDrinks'] = row[9] or 0
     USER_VARIABLES['BAC'] = row[10] or 0.0
-    USER_VARIABLES['sessionStart'] = row[11]
+    USER_VARIABLES['timeDrinking'] = row[11]
 
 
 def saveUserData(user_id, db_path='users.db'):
@@ -140,8 +142,8 @@ def saveUserData(user_id, db_path='users.db'):
     cursor = conn.cursor()
     cursor.execute('''
         UPDATE user_profile 
-        SET nickname = ?, sex = ?, weight = ?, age = ?, favorite_drink = ?,
-            likes = ?, dislikes = ?, avoid = ?, alc_grams_consumed = ?, bac = ?, session_start = ?
+        SET nickname = ?, sex = ?, weight = ?, age = ?, favoriteDrink = ?,
+            likes = ?, dislikes = ?, avoid = ?, standardDrinks = ?, BAC = ?, timeDrinking = ?
         WHERE user_id = ?
     ''', (
         USER_VARIABLES['nickname'],
@@ -152,9 +154,9 @@ def saveUserData(user_id, db_path='users.db'):
         USER_VARIABLES['likes'],
         USER_VARIABLES['dislikes'],
         USER_VARIABLES['avoid'],
-        USER_VARIABLES['alcGramsConsumed'],
+        USER_VARIABLES['standardDrinks'],
         USER_VARIABLES['BAC'],
-        USER_VARIABLES['sessionStart'],
+        USER_VARIABLES['timeDrinking'],
         user_id
     ))
     conn.commit()
@@ -166,21 +168,20 @@ WIDMARK_R = {'male': 0.73, 'female': 0.66}
 
 # Quick lookup for auto-logging drinks mentioned in conversation
 DRINK_DEFAULTS = {
-    'beer':         {'abv': 5.0,  'oz': 12.0},
-    'light beer':   {'abv': 4.2,  'oz': 12.0},
-    'ipa':          {'abv': 6.5,  'oz': 12.0},
-    'wine':         {'abv': 12.0, 'oz': 5.0},
-    'shot':         {'abv': 40.0, 'oz': 1.5},
-    'whiskey':      {'abv': 40.0, 'oz': 1.5},
-    'bourbon':      {'abv': 40.0, 'oz': 1.5},
-    'vodka':        {'abv': 40.0, 'oz': 1.5},
-    'tequila':      {'abv': 40.0, 'oz': 1.5},
-    'rum':          {'abv': 40.0, 'oz': 1.5},
-    'gin':          {'abv': 40.0, 'oz': 1.5},
-    'cocktail':     {'abv': 15.0, 'oz': 4.0},
-    'hard seltzer': {'abv': 5.0,  'oz': 12.0},
-    'margarita':    {'abv': 13.0, 'oz': 4.0},
-    'mixed drink':    {'abv': 13.0, 'oz': 4.0},
+    'beer':         {1},
+    'ipa':          {1.5},
+    'wine':         {1.25},
+    'shot':         {1},
+    'whiskey':      {1},
+    'bourbon':      {1},
+    'vodka':        {1},
+    'tequila':      {1.5},
+    'rum':          {1},
+    'gin':          {1},
+    'cocktail':     {1.5},
+    'hard seltzer': {1},
+    'margarita':    {2},
+    'mixed drink':    {1.5},
 }
 
 """
@@ -190,8 +191,8 @@ W = body weight in grams
 r = sex-based Widmark factor
 t = hours since consumption (with 0.5hr lag)
 """
-def calculate_bac(drinks = 1, weight_lbs = 170, sex = 'male'):
-    if not drinks or not weight_lbs:
+def calculate_bac(drinks = 0, timeDrinking = 0.5, weight_lbs = 170, sex = 'male'):
+    if not weight_lbs:
         return 0.0
 
     r = WIDMARK_R.get(sex, 0.73)
@@ -199,14 +200,11 @@ def calculate_bac(drinks = 1, weight_lbs = 170, sex = 'male'):
     now = datetime.utcnow()
     bac = 0.0
 
-    for drink in drinks:
-        # grams of alcohol: volume_oz * (abv/100) * mL/oz * g/mL
-        
-        alcohol_g = calculateAlcGrams(drink['abv_pct'], drink['volume_oz'])
-        hours_ago = (now - drink.logged_at).total_seconds() / 3600
-        contribution = (alcohol_g / (weight_g * r)) * 100
+    for drink in range(int(drinks)):
+
+        contribution = (0.6 / (weight_g * r)) * 100
         # Subtract metabolism (0.015%/hr) after 30-min absorption lag
-        absorbed_hours = max(0, hours_ago - 0.5)
+        absorbed_hours = max(0, timeDrinking - 0.5)
         contribution -= 0.015 * absorbed_hours
         bac += max(0, contribution)
 
@@ -226,12 +224,11 @@ def detect_drink_mention(text):
     for key in ordered:
         if key in text_lower:
             defaults = DRINK_DEFAULTS[key]
-            return {
-                'drink_type': key,
-                'abv_pct':    defaults['abv'],
-                'volume_oz':  defaults['oz'],
-                'drink_name': key.title(),
-            }
+            sanitizedDefaults = str(defaults).replace("{","").replace("}","")
+            drinksFloat = float(sanitizedDefaults)
+            print("num drinks: " + str(drinksFloat))
+            return drinksFloat
+            
     return None
 
 

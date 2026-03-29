@@ -146,6 +146,18 @@
         .logout-btn:hover {
             background-color: #777;
         }
+
+        .bac-box {
+            background: rgba(255,255,255,0.9);
+            border: 2px solid #333;
+            padding: 10px;
+            border-radius: 6px;
+            color: #222;
+            font-weight: bold;
+            width: fit-content;
+            margin: 0 auto 10px;
+            box-shadow: 0 0 8px rgba(0,0,0,0.2);
+        }
     </style>
 </head>
 <body>
@@ -153,6 +165,8 @@
         <div class="header">
             <h1>AI Bartender</h1>
         </div>
+
+        <div class="bac-box" id="bacBox">Current BAC: 0.00%</div>
         
         <div class="bartender-image-window Listening" id="bartenderImage">
             <img src="{{ url_for('static', filename='1stRexListening.png') }}" alt="Bartender">
@@ -259,6 +273,12 @@
             .then(data => {
                 // Update caption window with response
                 document.getElementById('captionWindow').textContent = data.response || 'No response';
+
+                // Update BAC display when provided by backend. If missing, keep existing value.
+                if (data.bac !== undefined) {
+                    document.getElementById('bacBox').textContent = `Current BAC: ${parseFloat(data.bac).toFixed(2)}%`;
+                }
+
                 // Clear input
                 input.value = '';
             })

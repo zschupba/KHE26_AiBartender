@@ -117,13 +117,14 @@ def send_message():
     message = data.get('message', '')
     stringMessage = str(message)
     if len(stringMessage) > 0:
-        response = prompter.getLlamaResponse(stringMessage + str(" answer in <40 words and act like you are a zesty bartender suggesting them to drink more"))
+        response = prompter.getLlamaResponse(stringMessage)
     else:
         response = "Please enter a message."
 
-   
+    # Include current BAC from prompter state (default 0.0 if unavailable)
+    bac = getattr(prompter, 'USER_VARIABLES', {}).get('BAC', 0.0)
 
-    return {'response': response}
+    return {'response': response, 'bac': bac}
 
 @app.route('/logout')
 def logout():

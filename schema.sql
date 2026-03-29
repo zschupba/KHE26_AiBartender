@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS users (
     likes TEXT,
     dislikes TEXT,
     avoid TEXT,
-    alcGramsConsumed INTEGER DEFAULT 0,
+    standardDrinks NUMERIC(3,1) DEFAULT 0.0,
     BAC NUMERIC(4,3) DEFAULT 0.000,
-    sessionStart DATETIME
+    timeDrinking NUMERIC(2,1) DEFAULT 0.5
 );
